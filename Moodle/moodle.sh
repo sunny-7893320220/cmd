@@ -26,5 +26,3 @@ UPDATE acu_block_quickmail_messages SET is_sending = 0 WHERE id = 117;
 
 
 php admin/cli/adhoc_task.php --id=40031
-
-

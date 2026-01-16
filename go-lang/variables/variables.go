@@ -29,6 +29,12 @@ func main() {
 
 	fmt.Println(a)
 
+	a++
+	fmt.Println(a)
+
+	a--
+	fmt.Println(a)
+
 	var b = 30
 
 	fmt.Println(b)
@@ -71,16 +77,34 @@ func main() {
 
 	fmt.Println("company is %s and the position is %s", company, position)
 
-	var d string
-	var e int
+	// var d string
+	// var e int
 
-	fmt.Print("Enter you name: ")
-	fmt.Scan(&d)
+	// fmt.Print("Enter you name: ")
+	// fmt.Scan(&d)
 
-	fmt.Print("Enter you age: ")
-	fmt.Scan(&e)
+	// fmt.Print("Enter you age: ")
+	// fmt.Scan(&e)
 
-	fmt.Println("your name is", d)
-	fmt.Println("your age is", e)
+	// fmt.Println("your name is", d)
+	// fmt.Println("your age is", e)
 
+	var f = 6
+	f += 10
+
+	if f == 16 {
+		fmt.Println("f is equal to 16")
+	} else {
+		fmt.Println("f is not equal to 16")
+	}
+
+	/* go type casting:= is the method of converting the value of one data type to another data type.
+
+	 */
+
+	var floatvalue float32 = 3.26556
+
+	var intvalue int = int(floatvalue)
+
+	fmt.Println(intvalue)
 }
