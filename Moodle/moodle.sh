@@ -26,3 +26,6 @@ UPDATE acu_block_quickmail_messages SET is_sending = 0 WHERE id = 117;
 
 
 php admin/cli/adhoc_task.php --id=40031
+
+# this is the cmd where i can directly restore the sql dump into the pod
+kubectl exec -i <pod-name> -- mysql -u <username> -p<password> <database-name> < ./path/to/your/dump.sql
