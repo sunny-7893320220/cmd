@@ -11,7 +11,7 @@ import "fmt"
 
 func main() {
 	var sclie = []int{1, 2, 3, 4, 5}
-	for i, v := range sclie {
-		fmt.Println(i, v)
+	for i := 0; i < len(sclie); i++ {
+		fmt.Println(sclie[i])
 	}
 }
