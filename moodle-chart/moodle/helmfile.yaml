@@ -1,0 +1,16 @@
+environments:
+  moodle:
+    kubeContext: minikube
+    values:
+      - values/moodle-values.yaml
+---
+
+releases:
+  - name: moodle
+    namespace: moodle
+    chart: ./
+    values:
+      - values/values.yaml
+      - values/{{ .Environment.Name }}-values.yaml
+    atomic: true
+    createNamespace: true
