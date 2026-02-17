@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migration-pod
+  namespace: jo-moodle-prod
+spec:
+  containers:
+  - name: migrator
+    image: busybox:latest
+    command: ["/bin/sh", "-c", "sleep 7200"]
+    volumeMounts:
+    - name: source-nfs
+      mountPath: /source-data
+    - name: dest-nfs
+      mountPath: /dest-data
+  volumes:
+  - name: source-nfs
+    nfs:
+      server: 10.150.168.146
+      path: /moodle_nfs_dev/so_data
+  - name: dest-nfs
+    nfs:
+      server: 10.185.32.234
+      path: /moodle_nfs/sharda_data_qa

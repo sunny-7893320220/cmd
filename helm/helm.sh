@@ -25,3 +25,11 @@ helmfile -e <environment> diff
 1. helm repo list
 
 2. helm search repo bitnami/moodle
+
+3. helm install 
+
+
+4. kubectl delete pod -n erpnext --all --force --grace-period=0
+
+
+5. helm show values oci://8gears.container-registry.com/library/n8n >>values.yaml

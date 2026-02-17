@@ -44,3 +44,15 @@ WHERE classname LIKE '%queue_quiz_open_notification_tasks_for_users%';
 # this is the cmd to delete the task which are in failed
 
 DELETE FROM acu_task_adhoc WHERE component LIKE '%quiz%' AND faildelay > 0;
+
+
+
+
+show tables like 'acu_%message%';
+
+
+
+mysql -u moodleuser -pvdJ@681ttQON moodledb
+
+
+gcloud auth application-default login
