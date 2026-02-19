@@ -28,7 +28,7 @@ UPDATE acu_block_quickmail_messages SET is_sending = 0 WHERE id = 117;
 php admin/cli/adhoc_task.php --id=197802
 
 # this is the cmd where i can directly restore the sql dump into the pod
-kubectl exec -i <pod-name> -- mysql -u <username> -p<password> <database-name> < ./path/to/your/dump.sql
+kubectl exec -i moodle-db-7d9fb95486-ljk5b -- mysql -u moodleuser -p vdJ@681ttQON  moodledb < ./path/to/your/dump.sql
 
 
 # To update the "queue_quiz_open_notification_tasks_for_users" in moodle

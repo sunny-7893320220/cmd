@@ -1,0 +1,84 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jobs-search
+
+---
+# Secret for optional Hunter.io API key
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jobs-search-secret
+  namespace: jobs-search
+type: Opaque
+stringData:
+  HUNTER_API_KEY: ""   # paste your Hunter.io key here if you have one
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobs-search
+  namespace: jobs-search
+  labels:
+    app: jobs-search
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jobs-search
+  template:
+    metadata:
+      labels:
+        app: jobs-search
+    spec:
+      containers:
+        - name: jobs-search
+          image: jobs-search:latest
+          imagePullPolicy: Never          # use local Minikube image
+          ports:
+            - containerPort: 5000
+          env:
+            - name: HUNTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jobs-search-secret
+                  key: HUNTER_API_KEY
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+# Service (NodePort for easy Minikube access)
+apiVersion: v1
+kind: Service
+metadata:
+  name: jobs-search-svc
+  namespace: jobs-search
+spec:
+  type: NodePort
+  selector:
+    app: jobs-search
+  ports:
+    - port: 80
+      targetPort: 5000
+      nodePort: 30080    # access via minikube ip:30080
