@@ -82,20 +82,30 @@ def find_company_website(company: str) -> str:
     return ""
 
 
-def find_linkedin(company: str) -> str:
-    """Find the LinkedIn company page URL."""
-    results = google_search(f"{company} LinkedIn company page site:linkedin.com")
+def find_linkedin(company: str, person: str = "") -> str:
+    """Find the LinkedIn company page or person profile URL."""
+    if person:
+        query = f"{person} {company} LinkedIn"
+    else:
+        query = f"{company} LinkedIn company page site:linkedin.com"
+        
+    results = google_search(query)
+    
+    pattern = "linkedin.com/in/" if person else "linkedin.com/company/"
+    
     for url in results:
-        if "linkedin.com/company/" in url:
+        if pattern in url:
             # Clean tracking params
             parsed = urlparse(url)
             return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-    # Fallback without site: restriction
-    results2 = google_search(f"{company} LinkedIn company")
-    for url in results2:
-        if "linkedin.com/company/" in url:
-            parsed = urlparse(url)
-            return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+    
+    # Fallback for company search
+    if not person:
+        results2 = google_search(f"{company} LinkedIn company")
+        for url in results2:
+            if "linkedin.com/company/" in url:
+                parsed = urlparse(url)
+                return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
     return ""
 
 
@@ -152,23 +162,38 @@ def find_contact_page(base_url: str) -> str:
     return base_url
 
 
-def find_hr_email_hunter(domain: str) -> str:
-    """Use Hunter.io API to find HR email for a domain."""
+def find_hr_email_hunter(domain: str, person: str = "") -> str:
+    """Use Hunter.io API to find email for a domain and optional person."""
     if not HUNTER_API_KEY or HUNTER_API_KEY == "your_hunter_api_key_here":
         return ""
     try:
+        params = {
+            "domain": domain,
+            "api_key": HUNTER_API_KEY,
+            "limit": 5,
+        }
+        if person:
+            # If person is provided, we use the Email Finder API or search for them
+            # For simplicity, we just look for them in the domain search results
+            pass
+        else:
+            params["department"] = "human_resources"
+
         resp = requests.get(
             "https://api.hunter.io/v2/domain-search",
-            params={
-                "domain": domain,
-                "api_key": HUNTER_API_KEY,
-                "department": "human_resources",
-                "limit": 5,
-            },
+            params=params,
             timeout=10,
         )
         data = resp.json()
         emails = data.get("data", {}).get("emails", [])
+        
+        if person:
+            name_parts = person.lower().split()
+            for e in emails:
+                val = e.get("value", "").lower()
+                if all(p in val for p in name_parts):
+                    return e.get("value", "")
+        
         if emails:
             return emails[0].get("value", "")
     except Exception as e:
@@ -176,10 +201,11 @@ def find_hr_email_hunter(domain: str) -> str:
     return ""
 
 
-def research_company(company: str) -> dict:
-    """Full research pipeline for one company."""
+def research_company(company: str, person: str = "") -> dict:
+    """Full research pipeline for one company and optional person."""
     result = {
         "company": company,
+        "person": person,
         "website": "",
         "linkedin": "",
         "hr_email": "",
@@ -193,7 +219,7 @@ def research_company(company: str) -> dict:
     time.sleep(1.5)
 
     # 2. Find LinkedIn
-    linkedin = find_linkedin(company)
+    linkedin = find_linkedin(company, person)
     result["linkedin"] = linkedin
     time.sleep(1.5)
 
@@ -202,16 +228,28 @@ def research_company(company: str) -> dict:
     if website:
         domain = urlparse(website).netloc.replace("www.", "")
         # Try Hunter.io first
-        hr_email = find_hr_email_hunter(domain)
+        hr_email = find_hr_email_hunter(domain, person)
         if not hr_email:
             # Scrape contact page
             contact_url = find_contact_page(website)
             emails = scrape_emails_from_page(contact_url)
-            if emails:
+            
+            if person:
+                name_parts = person.lower().split()
+                matches = [e for e in emails if all(p in e.lower() for p in name_parts)]
+                if matches:
+                    hr_email = matches[0]
+
+            if not hr_email and emails:
                 hr_email = emails[0]
             if not hr_email and contact_url != website:
                 emails2 = scrape_emails_from_page(website)
-                if emails2:
+                if person:
+                    name_parts = person.lower().split()
+                    matches = [e for e in emails2 if all(p in e.lower() for p in name_parts)]
+                    if matches:
+                        hr_email = matches[0]
+                if not hr_email and emails2:
                     hr_email = emails2[0]
     result["hr_email"] = hr_email
     time.sleep(1)
@@ -233,22 +271,26 @@ def research_company(company: str) -> dict:
 # Background worker
 # ─────────────────────────────────────────────
 
-def run_job(job_id: str, companies: list[str]):
+def run_job(job_id: str, items: list[dict]):
     jobs[job_id]["status"] = "running"
-    total = len(companies)
+    total = len(items)
     results = []
 
-    for i, company in enumerate(companies):
-        company = company.strip()
+    for i, item in enumerate(items):
+        company = item.get("company", "").strip()
+        person = item.get("person", "").strip()
+        
         if not company:
             continue
-        logger.info(f"[{job_id}] Researching {i+1}/{total}: {company}")
+            
+        logger.info(f"[{job_id}] Researching {i+1}/{total}: {company} (Person: {person})")
         try:
-            data = research_company(company)
+            data = research_company(company, person)
         except Exception as e:
             logger.error(f"Error researching {company}: {e}")
             data = {
                 "company": company,
+                "person": person,
                 "website": "",
                 "linkedin": "",
                 "hr_email": "",
@@ -262,7 +304,7 @@ def run_job(job_id: str, companies: list[str]):
         time.sleep(2)
 
     jobs[job_id]["status"] = "done"
-    logger.info(f"[{job_id}] Job complete. {len(results)} companies processed.")
+    logger.info(f"[{job_id}] Job complete. {len(results)} items processed.")
 
 
 # ─────────────────────────────────────────────
@@ -277,10 +319,16 @@ def index():
 @app.route("/search", methods=["POST"])
 def start_search():
     data = request.get_json()
-    companies = data.get("companies", [])
-    if not companies:
+    items = data.get("items", [])
+    if not items:
+        # Fallback for old format (list of strings)
+        companies = data.get("companies", [])
+        if companies:
+            items = [{"company": c, "person": ""} for c in companies]
+            
+    if not items:
         return jsonify({"error": "No companies provided"}), 400
-    if len(companies) > 150:
+    if len(items) > 150:
         return jsonify({"error": "Max 150 companies per batch"}), 400
 
     job_id = str(uuid.uuid4())
@@ -288,9 +336,9 @@ def start_search():
         "status": "queued",
         "progress": 0,
         "results": [],
-        "total": len(companies),
+        "total": len(items),
     }
-    thread = threading.Thread(target=run_job, args=(job_id, companies), daemon=True)
+    thread = threading.Thread(target=run_job, args=(job_id, items), daemon=True)
     thread.start()
     return jsonify({"job_id": job_id})
 

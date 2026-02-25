@@ -1,0 +1,3 @@
+# this is the cmd to get the password of argocd 
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d   

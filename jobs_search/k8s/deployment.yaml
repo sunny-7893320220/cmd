@@ -37,8 +37,8 @@ spec:
     spec:
       containers:
         - name: jobs-search
-          image: jobs-search:latest
-          imagePullPolicy: Never          # use local Minikube image
+          image: sunny7893320220/jobsearch:3
+          # imagePullPolicy: Never          # use local Minikube image
           ports:
             - containerPort: 5000
           env:

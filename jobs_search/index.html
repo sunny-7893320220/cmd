@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Company Research Tool</title>
-  <meta name="description" content="Upload a list of companies and automatically find their website, LinkedIn, HR email, and phone number." />
+  <meta name="description"
+    content="Upload a list of companies and automatically find their website, LinkedIn, HR email, and phone number." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <!-- Background orbs -->
   <div class="bg-orb orb-1"></div>
@@ -22,28 +25,56 @@
     <header class="header">
       <div class="header-icon">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
         </svg>
       </div>
       <div>
         <h1 class="header-title">Company Research Tool</h1>
-        <p class="header-sub">Upload your company list → get website, LinkedIn, HR email &amp; phone</p>
+        <p class="header-sub">Upload a list or search manually to get website, LinkedIn, HR email &amp; phone</p>
       </div>
     </header>
+
+    <!-- Quick Search Section -->
+    <section class="card quick-search-section">
+      <h2 class="section-title">
+        <span class="step-badge">🚀</span> Quick Search
+      </h2>
+      <p class="section-desc">Search for a single company or person instantly.</p>
+
+      <div class="manual-input-group">
+        <div class="input-field">
+          <label for="manualCompany">Company Name</label>
+          <input type="text" id="manualCompany" placeholder="e.g. Google" />
+        </div>
+        <div class="input-field">
+          <label for="manualPerson">Person Name (Optional)</label>
+          <input type="text" id="manualPerson" placeholder="e.g. Sundar Pichai" />
+        </div>
+        <button class="btn btn-primary" id="quickSearchBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          Research
+        </button>
+      </div>
+    </section>
 
     <!-- Upload Section -->
     <section class="card upload-section" id="uploadSection">
       <h2 class="section-title">
         <span class="step-badge">1</span> Upload Company List
       </h2>
-      <p class="section-desc">Supports <strong>.csv</strong> and <strong>.md</strong> files. Max 150 companies per batch.</p>
+      <p class="section-desc">Supports <strong>.csv</strong> and <strong>.md</strong> files. Max 150 companies per
+        batch.</p>
 
       <div class="drop-zone" id="dropZone">
         <div class="drop-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
         </div>
         <p class="drop-text">Drag &amp; drop your file here</p>
@@ -56,17 +87,17 @@
       <div class="format-hints">
         <div class="format-card">
           <div class="format-label">CSV format</div>
-          <pre class="format-code">company_name
-Google
-Microsoft
-Infosys</pre>
+          <pre class="format-code">company_name, person_name
+Google, Sundar Pichai
+Microsoft, Satya Nadella
+Infosys, Salil Parekh</pre>
         </div>
         <div class="format-card">
           <div class="format-label">Markdown format</div>
           <pre class="format-code"># Companies
-- Google
-- Microsoft
-- Infosys</pre>
+- Google, Sundar Pichai
+- Microsoft, Satya Nadella
+- Infosys, Salil Parekh</pre>
         </div>
       </div>
 
@@ -79,7 +110,8 @@ Infosys</pre>
         <div class="preview-tags" id="previewTags"></div>
         <button class="btn btn-primary" id="searchBtn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
           </svg>
           Start Research
         </button>
@@ -115,9 +147,9 @@ Infosys</pre>
           <input type="text" class="search-filter" id="filterInput" placeholder="Filter companies…" />
           <button class="btn btn-success" id="exportBtn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
             Export CSV
           </button>
@@ -130,10 +162,12 @@ Infosys</pre>
             <tr>
               <th>#</th>
               <th>Company</th>
+              <th>Person</th>
               <th>Website</th>
               <th>LinkedIn</th>
               <th>HR Email</th>
               <th>HR Phone</th>
+              <th>Search</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -145,4 +179,5 @@ Infosys</pre>
 
   <script src="app.js"></script>
 </body>
+
 </html>

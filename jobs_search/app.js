@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────
-let companies = [];
+let items = []; // formerly companies
 let jobId = null;
 let pollInterval = null;
 let allResults = [];
@@ -26,6 +26,11 @@ const resultsCount = document.getElementById("resultsCount");
 const resultsBody = document.getElementById("resultsBody");
 const exportBtn = document.getElementById("exportBtn");
 const filterInput = document.getElementById("filterInput");
+
+// Manual search
+const quickSearchBtn = document.getElementById("quickSearchBtn");
+const manualCompany = document.getElementById("manualCompany");
+const manualPerson = document.getElementById("manualPerson");
 
 // ─────────────────────────────────────────────
 // File drag & drop
@@ -62,66 +67,91 @@ function handleFile(file) {
 
 function parseCSV(text) {
     const result = Papa.parse(text.trim(), { header: true, skipEmptyLines: true });
-    let names = [];
+    let parsedItems = [];
 
-    // Try to find a column named 'company_name', 'company', 'name', or use first column
     const headers = result.meta.fields || [];
-    const col = headers.find(h => /company|name/i.test(h)) || headers[0];
+    const companyCol = headers.find(h => /company|org/i.test(h)) || headers[0];
+    const personCol = headers.find(h => /name|person|contact/i.test(h) && h !== companyCol);
 
-    if (col && result.data.length) {
-        names = result.data.map(row => (row[col] || "").trim()).filter(Boolean);
+    if (companyCol && result.data.length) {
+        parsedItems = result.data.map(row => ({
+            company: (row[companyCol] || "").trim(),
+            person: personCol ? (row[personCol] || "").trim() : ""
+        })).filter(i => i.company);
     } else {
-        // No header — treat each line as a company name
-        names = text.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"));
+        // No header — try splitting by comma/tab
+        const lines = text.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"));
+        parsedItems = lines.map(line => {
+            const parts = line.split(/[,\t]/);
+            return {
+                company: parts[0].trim(),
+                person: parts[1] ? parts[1].trim() : ""
+            };
+        }).filter(i => i.company);
     }
-    setCompanies(names);
+    setItems(parsedItems);
 }
 
 function parseMarkdown(text) {
     const lines = text.split("\n");
-    const names = [];
+    const parsedItems = [];
     for (const line of lines) {
         const stripped = line.trim();
-        // Match bullet lists: "- Company" or "* Company" or "1. Company"
+        // Match bullet lists: "- Company, Person" or "* Company, Person"
         const bulletMatch = stripped.match(/^[-*•]\s+(.+)/) || stripped.match(/^\d+\.\s+(.+)/);
         if (bulletMatch) {
-            names.push(bulletMatch[1].trim());
+            const content = bulletMatch[1].trim();
+            const parts = content.split(/[,|]/);
+            parsedItems.push({
+                company: parts[0].trim(),
+                person: parts[1] ? parts[1].trim() : ""
+            });
             continue;
         }
-        // Match table rows: | Company | ...
+        // Match table rows: | Company | Person | ...
         if (stripped.startsWith("|") && !stripped.startsWith("|---") && !stripped.startsWith("| ---")) {
             const cells = stripped.split("|").map(c => c.trim()).filter(Boolean);
             if (cells.length && !/^company|^name/i.test(cells[0])) {
-                names.push(cells[0]);
+                parsedItems.push({
+                    company: cells[0],
+                    person: cells[1] || ""
+                });
             }
             continue;
         }
         // Plain non-heading lines
         if (stripped && !stripped.startsWith("#") && stripped.length > 1) {
-            names.push(stripped);
+            const parts = stripped.split(/[,|]/);
+            parsedItems.push({
+                company: parts[0].trim(),
+                person: parts[1] ? parts[1].trim() : ""
+            });
         }
     }
-    setCompanies([...new Set(names)]);
+    setItems(parsedItems);
 }
 
-function setCompanies(names) {
-    companies = names.slice(0, 150);
-    if (companies.length === 0) {
-        alert("No company names found in the file. Check the format.");
+function setItems(newItems) {
+    items = newItems.slice(0, 150);
+    if (items.length === 0) {
+        alert("No company/person names found in the file. Check the format.");
         return;
     }
     renderPreview();
 }
 
 function renderPreview() {
-    previewCount.textContent = `${companies.length} companies found`;
-    previewTags.innerHTML = companies.map(c => `<span class="tag">${escHtml(c)}</span>`).join("");
+    previewCount.textContent = `${items.length} items found`;
+    previewTags.innerHTML = items.map(i => {
+        const label = i.person ? `${i.company} (${i.person})` : i.company;
+        return `<span class="tag">${escHtml(label)}</span>`;
+    }).join("");
     previewSection.style.display = "block";
     previewSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 clearBtn.addEventListener("click", () => {
-    companies = [];
+    items = [];
     fileInput.value = "";
     previewSection.style.display = "none";
 });
@@ -130,9 +160,21 @@ clearBtn.addEventListener("click", () => {
 // Search
 // ─────────────────────────────────────────────
 searchBtn.addEventListener("click", startSearch);
+quickSearchBtn.addEventListener("click", startQuickSearch);
+
+function startQuickSearch() {
+    const company = manualCompany.value.trim();
+    const person = manualPerson.value.trim();
+    if (!company) {
+        alert("Please enter a company name.");
+        return;
+    }
+    items = [{ company, person }];
+    startSearch();
+}
 
 async function startSearch() {
-    if (!companies.length) return;
+    if (!items.length) return;
     searchBtn.disabled = true;
 
     // Reset results
@@ -143,13 +185,13 @@ async function startSearch() {
     // Show progress
     progressSection.style.display = "block";
     progressSection.scrollIntoView({ behavior: "smooth" });
-    updateProgress(0, companies.length, 0);
+    updateProgress(0, items.length, 0);
 
     try {
         const resp = await fetch("/search", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ companies }),
+            body: JSON.stringify({ items }),
         });
         const data = await resp.json();
         if (data.error) { alert(data.error); searchBtn.disabled = false; return; }
@@ -210,7 +252,10 @@ function renderResults(results) {
     resultsSection.style.display = "block";
     const filter = filterInput.value.toLowerCase();
     const filtered = filter
-        ? results.filter(r => r.company.toLowerCase().includes(filter))
+        ? results.filter(r =>
+            (r.company && r.company.toLowerCase().includes(filter)) ||
+            (r.person && r.person.toLowerCase().includes(filter))
+        )
         : results;
 
     resultsCount.textContent = `(${results.length})`;
@@ -222,15 +267,25 @@ function rowHtml(idx, r) {
     const linkedin = r.linkedin ? linkHtml(r.linkedin, "LinkedIn") : emptyCell();
     const email = r.hr_email ? `<a class="cell-link" href="mailto:${escHtml(r.hr_email)}">${escHtml(r.hr_email)}</a>` : emptyCell();
     const phone = r.hr_phone ? escHtml(r.hr_phone) : emptyCell();
+
+    const googleQuery = r.person ? `${r.person} ${r.company}` : r.company;
+    const googleLink = `<a class="google-link" href="https://www.google.com/search?q=${encodeURIComponent(googleQuery)}" target="_blank" title="Search on Google">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+    </a>`;
+
     const status = badgeHtml(r.status);
 
     return `<tr>
     <td>${idx}</td>
     <td class="company-name">${escHtml(r.company)}</td>
+    <td>${escHtml(r.person || "—")}</td>
     <td>${website}</td>
     <td>${linkedin}</td>
     <td>${email}</td>
     <td>${phone}</td>
+    <td>${googleLink}</td>
     <td>${status}</td>
   </tr>`;
 }
@@ -271,9 +326,9 @@ filterInput.addEventListener("input", () => renderResults(allResults));
 // ─────────────────────────────────────────────
 exportBtn.addEventListener("click", () => {
     if (!allResults.length) return;
-    const headers = ["Company", "Website", "LinkedIn", "HR Email", "HR Phone", "Status"];
+    const headers = ["Company", "Person", "Website", "LinkedIn", "HR Email", "HR Phone", "Status"];
     const rows = allResults.map(r => [
-        r.company, r.website, r.linkedin, r.hr_email, r.hr_phone, r.status
+        r.company, r.person, r.website, r.linkedin, r.hr_email, r.hr_phone, r.status
     ]);
     const csv = [headers, ...rows]
         .map(row => row.map(cell => `"${(cell || "").replace(/"/g, '""')}"`).join(","))
