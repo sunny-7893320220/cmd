@@ -1,0 +1,22 @@
+1. cloudlens deployment {frountend,backend} --> http://cloudlens.anthraai.com
+2. Qulix deployment {frountend,backend} --> https://qualix.deeptaai.com/, 
+3. Scala language gitOps workflow implementation {CI/CD pipeline} --> 
+    1. apxorapi 
+    2. druid-data-ingestion
+4. gitlab runner issues {The runner unable to store artifacts in GCS}
+5. gitlab runners permisstion --> explore
+6. gitlab protected branch
+7. mongo db local setup
+8. fruad detection deployment -->  Delection iniazation
+9. Frappe CRM --> Delection
+10. Created the service templete for all the scala language services
+
+        (5/03)
+
+1. setup of {grafana,loki,prometheus} in the local machine using the docker compose 
+2. modifed the argocd tanka files according to deeptaai dataplatform.
+3. Exploring the cloud cost optimization.
+
+        (09/03)
+
+1. 

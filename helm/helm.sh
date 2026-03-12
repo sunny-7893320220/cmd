@@ -33,3 +33,12 @@ helmfile -e <environment> diff
 
 
 5. helm show values oci://8gears.container-registry.com/library/n8n >>values.yaml
+
+helm install grafana grafana-community/grafana   
+
+
+ 
+helm uninstall <release-name> -n <namespace>
+
+
+helm uninstall opencost -n opencost

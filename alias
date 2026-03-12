@@ -1,0 +1,5 @@
+k ==> kubectl 
+
+kc ==> kubectl config get-contexts
+
+gc ==> gcloud auth login

@@ -1,0 +1,59 @@
+StatefulSets:
+
+
+StatefulSet typically requires PVCs for persistent storage and it will not delete when the pod is deleted.
+It has the order name convention
+Basically uses for databases, and for master & slave configurations
+
+
+Designed for stateful applications needing unique identities and storage.
+Maintains a consistent, predictable naming convention for Pods.
+Useful for databases, distributed systems, and applications requiring persistence.
+Ensures ordered deployment, scaling, and termination of Pods.
+
+
+DaemonSets:
+
+Ensures a specific Pod runs on every node in the cluster.
+Ideal for system-level services like monitoring agents or log collectors.
+Guarantees presence of designated Pods across the entire cluster.
+
+
+
+                            apiVersion: apps/v1
+                            kind: StatefulSet
+                            metadata:
+                            name: redis
+                            spec:
+                            serviceName: "redis"
+                            selector:
+                                matchLabels:
+                                app: redis
+                            updateStrategy:
+                                type: RollingUpdate
+                            replicas: 3
+                            template:
+                                metadata:
+                                labels:
+                                    app: redis
+                                spec:
+                                containers:
+                                - name: redis
+                                    image: redis
+                                    resources:
+                                    limits:
+                                        memory: 2Gi
+                                    ports:
+                                    - containerPort: 6379
+                                    volumeMounts:
+                                    - name: redis-data
+                                        mountPath: /usr/share/redis
+                            volumeClaimTemplates:                                   // this will be used to create PVC
+                            - metadata:
+                                name: redis-data
+                                spec:
+                                accessModes: [ "ReadWriteOnce" ]
+                                resources:
+                                    requests:
+                                    storage: 10Gi
+                            
