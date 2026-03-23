@@ -9,3 +9,6 @@ SELECT ts.name AS state, COUNT(t.id) AS count FROM tickets t JOIN ticket_states 
 
 
 sudo gmode-toggle
+
+
+env PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d scrumbot

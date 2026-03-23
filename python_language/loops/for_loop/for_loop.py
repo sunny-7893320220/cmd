@@ -23,9 +23,27 @@
 # for i in range(1,10):
 #     print(n,"*",i,"=",n*i)  
 
-num = int(input("enter the number:"))
-
-for i in range(num):
-    num += i
-print(num)
+# num = int(input("enter the number:"))
+# sum = 0 
+# for i in range(num + 1):
+#     sum += i
+# print(sum)
     
+# num = int(input("enter the number:"))
+# sum = 0 
+# i = 0
+# while i <= num :
+#     sum += i
+#     i += 1
+# print(sum)
+
+
+
+# factorial 
+
+n = int(input("enter the number:"))
+s = 1 
+
+for i in range(1,n + 1):
+    s *= i
+    print(s)
